@@ -55,7 +55,7 @@ Producing a video with an agent is easy to start and painful to finish. These ar
 
 **#3: Iteration costs a full rebuild.** Changing one line of script meant regenerating everything. The fix is a **single-line loop**: re-record only that line, re-sync durations, re-time only that frame, rebuild only its captions. Minutes, not an evening.
 
-These fixes were extracted from a shipped production — *"From One LLM Call to a Full Harness"*, a 17-frame bilingual explainer (zh 3m33s / en 3m10s) — and condensed into 40 hard-won rules covering arrow geometry, CJK font subsetting, WCAG ghost text, seek-safety and more.
+These fixes were extracted from a shipped production — *"From One LLM Call to a Full Harness"*, a 17-frame bilingual explainer (zh 3m33s / en 3m10s) — and condensed into 42 hard-won rules covering arrow geometry, CJK font subsetting, WCAG ghost text, seek-safety and the publishing close-out.
 
 ## Skills
 
@@ -63,7 +63,7 @@ These fixes were extracted from a shipped production — *"From One LLM Call to 
 
 | Skill | What it does |
 |---|---|
-| [bilingual-video](skills/video/bilingual-video/) | The general layer for **any** bilingual HyperFrames video — dual projects, narration + word-boundary captions, iteration loop, publishing conventions, 40 universal pitfalls. |
+| [bilingual-video](skills/video/bilingual-video/) | The general layer for **any** bilingual HyperFrames video — dual projects, narration + word-boundary captions, iteration loop, generated publishing pack, 42 universal pitfalls. |
 | [bilingual-tech-explainer](skills/video/bilingual-tech-explainer/) | Turns a technical article into a bilingual explainer for programmers — wall→fix narrative spine, continuity kit, teaching blueprints. Depends on `bilingual-video` plus the official [`faceless-explainer`](https://github.com/heygen-com/hyperframes) workflow. |
 
 More domains are coming; the layout and its growth rules live in [skills/README.md](skills/README.md).

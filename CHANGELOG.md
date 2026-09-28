@@ -4,6 +4,29 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-09-28
+
+### Added
+
+- **Publishing close-out as a skill step** (from the third production's delivery run):
+  new `bilingual-video/scripts/gen-publish-pack.mjs` generates a project's `PUBLISHING.md`
+  from disk truth — newest render in `renders/` (older cuts listed as a verify-before-upload
+  warning + duration cross-check), chapter timeline from `index.html` slot gaps and
+  `STORYBOARD.md` titles (folds <10s tails for the YouTube ≥10s rule), cover
+  (`crop=1920:890` + `pad` in the frame's dominant color; existing cover kept), a
+  flatness probe over every frame close and transition seam, credits (fonts / voice /
+  repo URL) and the Bilibili (科技→计算机技术 · 原创) + YouTube (Science & Technology ·
+  Altered content) sections with the human pre-upload checklist. Only the `<!-- FILL -->`
+  prose blocks stay hand-written; the script refuses to clobber a hand-authored file.
+- Pitfalls 41–42 (new "Publishing" category): generate the pack from disk truth
+  (hand-copied chapter times go stale on the first re-render); `renders/` accumulates
+  stale cuts — confirm the final file by mtime/size before uploading.
+
+### Changed
+
+- `bilingual-video` SKILL.md §4 rewritten from a conventions list into the executable
+  close-out step; pitfall counts 40 → 42 across both skills' READMEs and SKILL.md files.
+
 ## [0.3.2] - 2026-09-26
 
 ### Added

@@ -1,6 +1,6 @@
 # Pitfalls checklist (self-contained)
 
-All rules distilled from one full production run (long technical article → bilingual 17-frame explainer video, five rework rounds) plus viewer feedback on a second production. Have any agent read this file before dispatching tasks to it.
+All rules distilled from one full production run (long technical article → bilingual 17-frame explainer video, five rework rounds), viewer feedback on a second production, and the publishing close-out of a third. Have any agent read this file before dispatching tasks to it.
 
 ## Narration & captions
 
@@ -68,3 +68,8 @@ All rules distilled from one full production run (long technical article → bil
 38. Non-interactive agent runs (e.g. `opencode run`) auto-reject file access outside the working directory — copying fonts/scripts from skill dirs dies mid-pipeline. Use auto-approve (`opencode run --auto`) for full-pipeline jobs.
 39. Invoke pipeline scripts via their **realpath**: skill dirs are often symlinked (`~/.config/opencode/skills/x` → `~/.claude/skills/x`), and under a symlink `process.argv[1] !== import.meta.url`, so the script's main block is silently skipped — exit 0, no output, no files written. Debug symptom: a pipeline script that "does nothing".
 40. Long autonomous agent runs stall (small/free models especially) — typically after hours of good progress, in a long unstructured phase. Split the pipeline into bounded stages, resume stalled sessions with `--continue` (state is on disk), and judge progress by filesystem mtimes, never by the agent's own report.
+
+## Publishing
+
+41. The publishing close-out is **generated, not remembered**: run `scripts/gen-publish-pack.mjs` after each final render. Chapter timestamps must come from `index.html` (`data-start` / slot gaps) — hand-copied times go stale on the first re-render; the cover must `crop=1920:890` + `pad` (caption band out); and the pack's flatness probe over every frame close and transition seam catches a broken timeline before the upload, not after. Only the prose blocks in `PUBLISHING.md` are written by hand.
+42. `renders/` accumulates stale cuts — the flashiest filename is not always the final render. Identify the final file by mtime and size before anything is uploaded (the pack lists every render and marks the selected one); a stale upload ships yesterday's film.

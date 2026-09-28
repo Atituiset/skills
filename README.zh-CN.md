@@ -55,7 +55,7 @@ cp -r skills/video/bilingual-video ~/.config/opencode/skills/ # OpenCode
 
 **#3：迭代一次等于重来一遍。** 改一行文案就要全片重生成。修法是**单行闭环**：只重录该行 → 回写时长 → 只重定时该帧 → 只重建该帧字幕。几分钟，而不是一晚上。
 
-这些修法提炼自真实交付的作品——《从一次 LLM 调用到完整 Harness》（17 帧双语科普，zh 3m33s / en 3m10s）——并沉淀为 40 条实战规则，覆盖箭头几何、CJK 字体子集化、WCAG ghost text、seek 安全等。
+这些修法提炼自真实交付的作品——《从一次 LLM 调用到完整 Harness》（17 帧双语科普，zh 3m33s / en 3m10s）——并沉淀为 42 条实战规则，覆盖箭头几何、CJK 字体子集化、WCAG ghost text、seek 安全、发布收尾等。
 
 ## 技能列表
 
@@ -63,7 +63,7 @@ cp -r skills/video/bilingual-video ~/.config/opencode/skills/ # OpenCode
 
 | 技能 | 用途 |
 |---|---|
-| [bilingual-video](skills/video/bilingual-video/) | **任何双语视频**的通用生产层——双工程、配音与词边界字幕、迭代闭环、发布惯例、40 条通用踩坑清单。 |
+| [bilingual-video](skills/video/bilingual-video/) | **任何双语视频**的通用生产层——双工程、配音与词边界字幕、迭代闭环、自动生成的发布物料包、42 条通用踩坑清单。 |
 | [bilingual-tech-explainer](skills/video/bilingual-tech-explainer/) | 把技术文章做成中英双语程序员科普视频——撞墙→补墙叙事骨架、连贯性三件套、教学蓝图。依赖 `bilingual-video` 和官方 [`faceless-explainer`](https://github.com/heygen-com/hyperframes) 工作流。 |
 
 更多领域陆续加入；目录结构与生长规则见 [skills/README.md](skills/README.md)。

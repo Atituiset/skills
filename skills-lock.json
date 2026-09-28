@@ -4,12 +4,12 @@
     "bilingual-tech-explainer": {
       "source": ".",
       "sourceType": "local",
-      "computedHash": "9cd43213e737c96e2ec5dac1909da4f893ce35af122d1c2312bc64f1ef727291"
+      "computedHash": "8550f30cac1f3eec85756e9369141cb4dca53b77767ae574f01ada899d2eca85"
     },
     "bilingual-video": {
       "source": ".",
       "sourceType": "local",
-      "computedHash": "0600f5146aa9344f9ffad025a1359dc412cfb11967947b26f0e83bbe84887d58"
+      "computedHash": "7899278a25bb44dcc4643ad1146e3c586fb280e1763868f6ccd0ba5d90f93507"
     }
   }
 }
