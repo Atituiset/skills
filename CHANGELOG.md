@@ -4,6 +4,20 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- New incubating skill `skills/in-progress/visual-storytelling/`: turn an article's
+  narrative into a growing hand-drawn cartoon diagram world — progressive visual
+  disclosure (one world that grows beat by beat), a fixed visual grammar
+  (`references/visual-grammar.md`), and a narration-anchored beat sheet that renders
+  to static SVG assets. Timing is never baked into assets; HyperFrames owns the
+  timeline, keeping bilingual re-timing independent. Ships with a complete worked
+  beat sheet for a real LLM/RAG/Agent explainer article plus its rendered output
+  (18 per-beat delta SVGs, a final frame, and shared `fonts.css` — stacked and
+  pixel-verified). Incubating per CONTRIBUTING: not yet exercised on a shipped video.
+
 ## [0.3.3] - 2026-09-28
 
 ### Added
