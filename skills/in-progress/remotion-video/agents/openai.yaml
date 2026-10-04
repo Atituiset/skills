@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remotion Video"
+  short_description: "Create narrated Remotion videos with purposeful motion"
+  default_prompt: "Use $remotion-video to create a Chinese explainer from this material, with continuous mechanism animation and quiet bottom captions."
