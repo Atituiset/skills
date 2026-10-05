@@ -61,7 +61,7 @@ Turn beats into frames: each frame gets a start, a duration, a title and the nar
 
 ### Step 3 — One HTML composition per frame
 
-Each frame is its own composition and renders correctly at an arbitrary seek time — nothing depends on what ran before it. Any UI that repeats, within a frame or across frames, is instantiated from one template. Determinism is the contract that makes the frame re-renderable; the scan for it is in `references/render-pitfalls.md` (tooling group).
+Each frame is its own composition and renders correctly at an arbitrary seek time — nothing depends on what ran before it. Any UI that repeats, within a frame or across frames, is instantiated from one template, and a frame's styles ride inside its `<template>`. Both transports, the one that fails silently, and the pixel-diff that catches it are in `references/render-pitfalls.md` (identifiers group). Determinism is the contract that makes the frame re-renderable; the scan for it is in `references/render-pitfalls.md` (tooling group).
 
 **Done when**: every frame opens standalone at any seek time, and rendering it twice produces identical pixels.
 
@@ -93,6 +93,8 @@ An 8–10 minute and a 3–5 minute version are **second narrations**, not short
 
 One package per episode per language, plus one per condensed version, carrying the same slots the single-film pack carries, re-timed to episode-relative time. Then machine-scan every publishable string — titles, descriptions, chapters, tags and every card line — for cross-episode references, with per-language banned patterns.
 
+Covers come out of the same renderer as the episodes, parameterised by the manifest rather than copied per artifact class, and their legibility is measured at thumbnail size. The field-not-prose rule, the thumbnail measures and the manifest-parameterised renderer are in `references/render-pitfalls.md` (tooling group).
+
 **Done when**: the scan returns zero hits in both languages, every chapter timestamp in a package is episode-relative and starts at zero, and every artifact class has its cover as well as its copy.
 
 ### Step 9 — Hook spans for the vertical branch
@@ -105,7 +107,7 @@ A 9:16 deliverable is a re-composition, not a crop, and this project never got o
 
 | Open | When you hit |
 |---|---|
-| `references/render-pitfalls.md` | Judder, shimmer, blank cards, wrong or doubled captions, a runtime crash, a white flash at a seam, an unexpected pile of lint warnings, a render that died partway, a scan whose hits are all noise or are not there at all, a rebuild that overwrote the working set, a release shipped without its cover |
+| `references/render-pitfalls.md` | Judder, shimmer, blank cards, an instance that mounted as unstyled inline text, wrong or doubled captions, a runtime crash, a white flash at a seam, an unexpected pile of lint warnings, a render that died partway, a scan whose hits are all noise or are not there at all, a cut that lands off its time, a cover that reads at full size and not as a thumbnail, derived art that disagrees with its description, a rebuild that overwrote the working set, a release shipped without its cover |
 | `references/episode-self-containment.md` | You are splitting, or a cold viewer cannot follow an episode — lead-in/lead-out wording, deictic lines, the banned-pattern scan, the cold-open decision |
 | `references/condensed-versions.md` | You are making an 8–10 or 3–5 minute version — why cutting segments loses points, purpose-written narration, the piecewise cue warp, the trim ledger |
 | `references/bilingual-dual-project.md` | zh and en timelines, TTS word boundaries as the reveal clock, cross-language re-timing |

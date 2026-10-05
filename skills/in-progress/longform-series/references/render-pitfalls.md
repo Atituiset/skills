@@ -48,6 +48,18 @@ This trap cost the most time in the run, because the failing case is the one tha
 
 **Fix**: any block of markup instantiated N times takes its ids from a template, and uniqueness is *proven* by parsing the ids back out of the file and counting them before rendering. Generation plus a uniqueness check is the pair; either alone repeats this bug.
 
+### Every instance renders as unstyled inline text in DOM order
+
+**Symptom**: a sub-composition mounts, the render "succeeds", and all **48** instances come out as plain inline text stacked in document order. No error anywhere in the run.
+
+**Cause**: its `<style>` block sits in `<head>`. Only `<template>` content travels into a mounted instance — the runtime clones template contents, so a style block outside the template is dropped on mount. Copying a working composition and putting the styles where a full document would carry them reads as correct in review.
+
+**Fix**: the `<style>` block lives **inside** the `<template>`, beside the markup it styles. Keep the same root-relative `src` and vendored-script form the working composition used.
+
+**Detection**: a healthy render proves nothing, because the failure is silent. Pixel-diff the output against the pre-change master and compare the **dark-pixel bounding box** — the broken render read `x[2..718] y[20..76]` (one text run in the top-left) where the reference read `x[96..1566] y[34..868]`. After moving the block, mean absolute difference fell to **0.278/255**, with **0.055%** of channels differing by more than 40.
+
+**Follow-on**: the move surfaced a second lint error, `font_family_without_font_face`. The families the composition names in `font-family` were declared elsewhere in the project, so the block that travelled with the copy was the only declaration the file had — and lint reads the file, not the project. Keep all **four** `@font-face` declarations with the style block: the file that names a family is the file that declares it.
+
 ## Caption runtime
 
 ### A render that blows the navigation budget, sometimes
@@ -184,6 +196,35 @@ Verify from a **later** command that the process count and free memory both held
 
 **Fix**: name the property each instrument measures before trusting either, and give content and layout separate instruments. Two instruments disagreeing is information, not noise — the shared input is the first suspect.
 
+### A cover that reads at full size is unreadable as a thumbnail
+
+"Legible at thumbnail size" is the one cover requirement nobody can eyeball honestly: a 1920×1080 PNG always looks legible on a 1920px monitor, and the failure only appears after the platform has downscaled it. So **perform the downscale a platform performs** — LANCZOS to **320 px** wide — and measure what survived:
+
+- per-element **ink height** and **contrast ratio**, taking the contrast from the **darkest surviving pixel**, not the median: a 4 px stroke at 1/6 scale is mostly antialiasing, so a median flatters it
+- whether each **stroke region stays closed** (a closed ring shows its step on all four sides)
+- the **gap between adjacent elements**, so seven marks do not read as three bars
+- whether the title's **faintest line** survives — a two-line title unions into one horizontal blob when the lines are measured together, since CJK glyphs on line 1 and line 2 overlap in x, so **split lines on ink-free rows first**
+
+Two real defects were found only by measuring: a two-line title unioning into a single blob, and motif collisions between covers that shared a layout.
+
+The instrument trap for this check is the one already recorded above, in the same family as "A scan that cries wolf": the cheap instruments available here — a whole-image luma signature and a plain IoU — both measured this set's shared layout rather than its content, so both read every cover as the same picture. Prefer a **saturated-channel** measure: two motifs of completely different objects sit **~0.012** apart on a whole-image luma signature, because the shared cream ground, cobalt panel and block of type average out to the same number.
+
+### A cut that should land on a time lands a whole GOP early or late
+
+Episode cuts come out of ffmpeg, and the manifest's arithmetic can be exact while the file is wrong. Three traps, each measured on this run:
+
+| Trap | Measured | Use instead |
+|---|---|---|
+| `-c copy` snaps the cut to the nearest **keyframe**, so a cut starting mid-GOP swallows up to a whole GOP of the segment **before** it | **+1.03 s / +1.04 s / +1.07 s** on three episode cuts, GOP = 1 s | re-encode the cut whenever a duration has to match |
+| `-to <end>` does **not** mean `end - start` once the input has been seeked | measured and fixed in the same pass | `-t <duration>` |
+| `-avoid_negative_ts make_zero` shifts timestamps to zero, which **pads** the container | **+2.435 s** | leave the flag off and check the duration |
+
+So a stream copy is a remux and nothing else: use it to join pieces already encoded to one profile, never to cut. Re-encoding a delivery-quality source is a **second generation** — a CRF 16 trim of a delivery master survives a 1:1 crop of the caption cleanly and is still a second encode, which belongs in the trade-off note rather than in the command.
+
+### The concat demuxer resolves a relative path against the list file
+
+`-f concat` resolves each entry against **the list file's own directory**, not the process cwd, so a path that works when you type it fails inside a script that ran from elsewhere. Write both entries **absolute**.
+
 ### A derived artifact ships with less packaging than the originals
 
 **Symptom**: the master had publishing copy but no cover image, while all 25 episodes had both. The derived set looked finished, because finishing it had never been written down.
@@ -191,6 +232,26 @@ Verify from a **later** command that the process count and free memory both held
 **Cause**: the packaging pass enumerated the artifacts it already knew about — the episodes — and treated anything else as a leftover rather than as an artifact class of its own. Cover + copy were a follow-up, not part of an artifact's definition.
 
 **Fix**: enumerate the **artifact classes** first (master, episode, condensed version, any re-layout), then treat cover + copy as part of each one's definition of done. A class with no cover is not done.
+
+### Derived art that comes from a description instead of a field
+
+**Symptom**: **14 of 25** covers wrong. Five consecutive episodes resolved to one motif and came out **identical**, several covers carried a *different* episode's title, and one rendered two U+FFFD characters as black diamonds.
+
+**Cause**: the cover manifest carried a `visual` field of **prose** describing each picture, and the renderer mapped that prose onto motif keys by **substring search**. The prose was stale from an abandoned earlier split, so the mapping resolved to the wrong key — and the subtitle, reused from that previous cut's mapping, carried a foreign episode's title.
+
+**Fix**: two halves, and both matter. An explicit per-episode `motif` field that **wins** over anything derived from prose (`e.motif || motifFor(e.visual)`), and a per-episode subtitle that is **unique by construction** rather than inherited from a previous cut's mapping.
+
+**Law: derived art reads a field; prose describes and never decides.** A prose field is documentation, and it goes stale the moment the artifact changes shape.
+
+**Detection**: count distinct motif values across the set and look for **runs** — five consecutive episodes on one key is a finding even when every value is legal. Reuse is not automatically wrong: the healthy set here resolves 25 episodes onto 16 distinct values with no consecutive repeat at all, which is what a hand-assigned mapping looks like.
+
+### The third renderer for the same picture
+
+**Symptom**: three renderer generations for the cover set (25 episodes, then the short versions, then the vertical hooks), plus a fourth for the desk variant — each a copy of the one before.
+
+**Fix**: **one source of truth per visual, parameterised rather than copied.** One composition reading `data-composition-variables`, and one driver taking `--manifest <path>` that points the same reel host at an alternative manifest. A new manifest is a new set of **entries** into the same reel — host, slot geometry, capture and file write all unchanged — so the existing covers stay **byte-identical** and no manifest has to be hand-translated.
+
+This is the counterpart to the duplication that produced the duplicated-id bug above: there the fix was one template; here it is one renderer plus a manifest. Same law, one level out.
 
 ### Detaching a long run so it survives its launcher
 

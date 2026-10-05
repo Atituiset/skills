@@ -9,7 +9,7 @@ Pairs with [bilingual-video](../../video/bilingual-video/) and [bilingual-tech-e
 ## Layout
 
 - `SKILL.md` — the law, what each change costs, the render fast-path flags, the workflow with completion criteria, and the reference map
-- `references/render-pitfalls.md` — the trap catalog as symptom → cause → fix, grouped: motion/judder, identifiers, caption runtime, seams, tooling and delivery
+- `references/render-pitfalls.md` — the trap catalog as symptom → cause → fix, grouped: motion/judder, identifiers and template transport, caption runtime, seams, tooling and delivery
 - `references/episode-self-containment.md` — the split-design law: lead-ins, lead-outs, the deictic-line list, narration-anchored splitting, the cold-open decision, the banned-pattern scan
 - `references/condensed-versions.md` — the condensation law: why cutting segments loses points, purpose-written narration for a runtime, the piecewise cue-time warp, the trim ledger, duration ceilings as ceilings
 - `references/bilingual-dual-project.md` — why zh and en carry separate timelines, the word-boundary reveal clock, the seam-holding card, episode-relative split offsets
