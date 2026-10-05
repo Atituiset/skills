@@ -19,4 +19,4 @@ Pairs with [bilingual-video](../../video/bilingual-video/) and [bilingual-tech-e
 
 ## Status
 
-Its `references/publication-copy.md` grew from copy-only to the full delivery package after a production run where a finished English package was nearly mistaken for a finished bilingual one. The rule it now encodes: **check every requested language individually** — finishing one version does not close a missing one.
+`references/publication-copy.md` now covers the full delivery package — copy, a publication cover and a representative still from the final video — rather than copy alone, extended during production of the long-form bilingual explainer. The rule it encodes: **check every requested language individually** — finishing one version does not close a missing one.
