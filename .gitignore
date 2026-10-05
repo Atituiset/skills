@@ -4,3 +4,9 @@ __pycache__/
 .DS_Store
 .agents/skills/
 skills-lock.json
+
+# Rendered video projects: working directories, not repo content.
+# A finished bilingual project is ~4 GB of MP4s and PNGs (masters, episode cuts,
+# cover reels, render workdirs). Keep them out of history; publish the renders,
+# commit the skills.
+videos/

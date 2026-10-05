@@ -4,9 +4,17 @@
 //   1. Every skills/<category>/<skill>/ has a SKILL.md with valid frontmatter
 //      (name matches the directory, description present and <= 1024 chars).
 //   2. Every category directory has a README.md.
-//   3. Relative Markdown links in README/SKILL/ADR files resolve to real files.
+//   3. Relative Markdown links in tracked Markdown files resolve to real files.
+//
+// On (3): the walk covers **git-tracked files only**, so a local run and a CI run
+// agree. Otherwise the check descends into untracked working directories — a
+// video project's `frame-packets/` legitimately point at another skill's rule
+// files outside this repo — and reports ~90 links that are not broken. A check
+// whose findings are all noise is worse than no check, because it teaches you
+// to skip it. Falls back to a full walk when git is unavailable.
 import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { join, dirname, resolve, relative } from "node:path";
+import { execFileSync } from "node:child_process";
 
 const root = resolve(import.meta.dirname, "..");
 const skillsDir = join(root, "skills");
@@ -55,13 +63,23 @@ for (const category of readdirSync(skillsDir)) {
 }
 
 // --- 3: relative markdown links resolve -----------------------------------
+// Tracked files only, when git can tell us. Falls back to a full walk so the
+// check still runs from an unpacked tarball with no .git.
+let tracked = null;
+try {
+  const out = execFileSync("git", ["ls-files", "-z"], { cwd: root, maxBuffer: 64 << 20 }).toString();
+  tracked = new Set(out.split("\0").filter(Boolean));
+} catch {
+  tracked = null;
+}
+
 const mdFiles = [];
 function collectMd(dir) {
   for (const entry of readdirSync(dir)) {
     if (entry === ".git" || entry === "node_modules") continue;
     const p = join(dir, entry);
     if (statSync(p).isDirectory()) collectMd(p);
-    else if (entry.endsWith(".md")) mdFiles.push(p);
+    else if (entry.endsWith(".md") && (!tracked || tracked.has(relative(root, p)))) mdFiles.push(p);
   }
 }
 collectMd(root);
