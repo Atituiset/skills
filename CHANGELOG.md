@@ -8,6 +8,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- New incubating skill `skills/in-progress/longform-series/`: turn one finished long-form
+  bilingual film into a separately published series. Three laws — the master renders once and
+  everything downstream is ffmpeg; an episode works for a viewer who has never seen the film or
+  any other episode (its lead-in poses its own question, deictic lines break self-containment,
+  the cold open becomes episode 1's front door rather than its own episode); and a shorter
+  version is **written for its runtime, not cut from the master** — trimming inside a scene to hit
+  a duration ceiling drops the point of the passage, not just its tail, so the fix is
+  purpose-written narration plus a piecewise cue warp built from an LCS alignment of the old and
+  new word timings with cue anchors on top. Ships with `references/render-pitfalls.md` (a
+  symptom → cause → fix catalog of everything that cost a 20–35 minute render here, including
+  the three classes of false positive a hygiene scan produces) and `scripts/check-hygiene.py`,
+  a pre-render gate that hard-fails authored `will-change`, CSS animation and remote references
+  and warns on a tweened `filter` against the hold boundary. Also records the abandoned 9:16
+  branch — three attempts, ~8 hours, unreached — with the measured cost of each crop-based
+  treatment, because a 9:16 deliverable is a re-composition and not a crop. Per CONTRIBUTING:
+  incubating, not in the plugin marketplace.
+- New incubating skill `skills/in-progress/tldraw-video-assets/`: integrate tldraw-exported SVG
+  artwork into a deterministic video pipeline, which is a separate concern from
+  `visual-storytelling`'s design layer. The export is a **document, not an image**: labels are
+  live HTML inside `<foreignObject>` in the language the diagram was drawn in, every label inlines
+  a full computed-style dump (one inert `will-change: auto` each, ~300 per project — all noise),
+  declared boxes are padded far past their ink (up to 111×), `opacity="0"` clip rects declare a
+  far larger box than anything painted, and path `d` numbers must be walked rather than paired
+  two-by-two (a 300 px connector measured 1413 px wide, and every downstream conclusion rested on
+  that number). Verification is by pixels — stacked beats reproduced `final-frame.svg` at zero
+  differing pixels of 921,600 — because a composition can render successfully and still be blank.
 - New incubating skill `skills/in-progress/visual-storytelling/`: turn an article's
   narrative into a growing hand-drawn cartoon diagram world — progressive visual
   disclosure (one world that grows beat by beat), a fixed visual grammar
@@ -17,6 +43,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   beat sheet for a real LLM/RAG/Agent explainer article plus its rendered output
   (18 per-beat delta SVGs, a final frame, and shared `fonts.css` — stacked and
   pixel-verified). Incubating per CONTRIBUTING: not yet exercised on a shipped video.
+
+### Changed
+
+- Root `README.md` / `README.zh-CN.md`: the "why these skills exist" failure-mode list grew from
+  three to six, adding the three that only a long-form production surfaces — a render that
+  succeeds and is still wrong, tooling that misreports in both directions (noise-only scans and
+  phantom findings), and concurrency being unsound on a small host. The iteration entry now
+  carries measured numbers (a 25–35 minute master re-render → 11 s for the one frame that
+  changed) and the corollary that most of that pain is a granularity mistake rather than a
+  renderer limitation. Both files also describe the in-progress cycle and the 29-minute
+  production behind it, linking to `skills/in-progress/` rather than listing incubating skills in
+  the reference table, per ADR-0001.
 
 ## [0.3.3] - 2026-09-28
 
