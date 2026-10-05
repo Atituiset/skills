@@ -59,8 +59,8 @@ Use one caption owner for each active spoken phrase. [QuietCaptions.tsx](assets/
 - Check CJK glyphs, caption readability, audio presence, broken assets and accidental overlapping subtitle sources. After an edit, verify the affected frames before re-rendering; broaden checks when new evidence warrants it.
 - Link the actual current MP4 and, when helpful, a short preview or Studio URL. Use a new filename for a material revision so playback caches cannot conceal it. State what changed and any unverified part candidly.
 
-## Companion publication copy
+## Publication copy, covers and screenshots
 
-For a completed video intended for sharing, include a local `PUBLISH.md` alongside the final delivery unless the user requests video only. Also read [publication-copy.md](references/publication-copy.md) when asked for 发布文稿, a title, description or social post. Base the copy on the final cut, and refresh it after content revisions. A narrow visual fix only needs copy changes when the existing copy becomes inaccurate.
+For each completed language version intended for sharing, deliver the MP4, a saved `PUBLISH.md`, a publication cover and a representative screenshot extracted from the final video, unless the user narrows the deliverables. Read [publication-copy.md](references/publication-copy.md) for this delivery and for requests about 发布文稿, 封面, 截图, titles or social posts. Verify that every requested language has its own files and links; copy written only in chat is not a saved deliverable. A narrow revision needs updates only to assets made inaccurate by that change.
 
 Drafting publication copy does not authorize uploading or posting. External publication remains a separate user instruction.
