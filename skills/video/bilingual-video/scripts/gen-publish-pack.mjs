@@ -48,7 +48,8 @@ if (opts.help) {
   process.exit(0);
 }
 const project = resolve(opts.project);
-if (!existsSync(join(project, "index.html"))) fail(`no index.html under ${project}`);
+if (!existsSync(join(project, "index.html")) && !existsSync(join(project, "scenes.json")))
+  fail(`neither index.html nor scenes.json under ${project} — cannot locate the scene list`);
 
 function run(cmd, args, { soft = false } = {}) {
   const r = spawnSync(cmd, args, { encoding: "buffer", maxBuffer: 64 * 1024 * 1024 });
@@ -59,12 +60,30 @@ function run(cmd, args, { soft = false } = {}) {
 const have = (cmd) => spawnSync(cmd, ["-version"], { stdio: "ignore" }).status === 0;
 if (!have("ffmpeg") || !have("ffprobe")) fail("ffmpeg/ffprobe not found on PATH");
 
-// --- index.html: frame starts + durations ----------------------------------
+// --- scene starts + durations ------------------------------------------------------
+// Two sources, because a video project is no longer one engine's project shape: an
+// `index.html` with `data-start`/`data-duration` (HyperFrames), or a generated
+// `scenes.json` (`[{n, start, dur, title, kicker}]`) from any frame-driven engine. Without the
+// second, this tool only works on the engine it was written for — and the failure is a message
+// pointing at index.html when the real problem is that the project is not that shape.
+function parseScenes() {
+  const json = join(project, "scenes.json");
+  if (existsSync(json)) {
+    return JSON.parse(readFileSync(json, "utf8")).map((s) => ({
+      n: s.n, start: s.start, dur: s.dur, title: s.title, kicker: s.kicker,
+    }));
+  }
+  return parseIndex();
+}
+
 function parseIndex() {
   const html = readFileSync(join(project, "index.html"), "utf8");
   const frames = new Map(); // n -> { start, dur }
-  for (const tag of html.match(/<[^>]*id="el-\d\d-[^"]*"[^>]*>/g) ?? []) {
-    const n = Number(tag.match(/id="el-(\d\d)-/)[1]);
+  // the element id is `el-<prefix><NN>-<title>`; the prefix is optional because a project's
+  // builder may namespace it (`el-f01-…`) — a strict `el-\d\d-` parses zero frames and fails
+  // with a message that points at index.html rather than at the mismatch
+  for (const tag of html.match(/<[^>]*id="el-[a-z]?\d\d-[^"]*"[^>]*>/g) ?? []) {
+    const n = Number(tag.match(/id="el-[a-z]?(\d\d)-/)[1]);
     const f = frames.get(n) ?? {};
     const s = tag.match(/data-start="([\d.]+)"/);
     const d = tag.match(/data-duration="([\d.]+)"/);
@@ -82,10 +101,28 @@ function parseIndex() {
 
 // --- STORYBOARD.md: frame titles -------------------------------------------
 function parseTitles() {
+  // a scene list that already carries titles (the engine knows them) needs no STORYBOARD.md
+  if (existsSync(join(project, "scenes.json"))) {
+    const t = new Map();
+    for (const s of JSON.parse(readFileSync(join(project, "scenes.json"), "utf8"))) {
+      if (s.title) t.set(s.n, s.title);
+    }
+    if (t.size) return t;
+  }
   try {
     const md = readFileSync(join(project, "STORYBOARD.md"), "utf8");
     const titles = new Map();
     for (const m of md.matchAll(/^## Frame (\d+)\s*[—–-]\s*(.+)$/gm)) titles.set(Number(m[1]), m[2].trim());
+    // …or a table, which is the richer of the two formats and the one a project that keeps
+    // durations and beats alongside the title will already have:
+    //   | # | title | kicker | beat | narration | frame | start |
+    //   | 01 | 两秒钟 | ✱ 引入 | 0 | 14.66s | 15.56s | 0.00s |
+    // Skip the header and separator rows by requiring a zero-padded frame number.
+    if (titles.size === 0) {
+      for (const m of md.matchAll(/^\|\s*(\d{1,2})\s*\|\s*([^|]+?)\s*\|.*$/gm)) {
+        titles.set(Number(m[1]), m[2].trim());
+      }
+    }
     return titles;
   } catch {
     return new Map();
@@ -182,12 +219,26 @@ function chaptersOf(frames, titles, renderDur) {
   return chapters;
 }
 function voiceOf() {
-  try { return readFileSync(join(project, "SCRIPT.md"), "utf8").match(/^\*\*Voice:\*\*\s*(.+)$/m)?.[1].trim() ?? "—"; }
-  catch { return "—"; }
+  // both spellings are in circulation: a `**Voice:** …` line, and YAML front matter
+  // (`voice: edge-tts zh-CN-XiaoxiaoNeural rate +3%`), which is what the bilingual-video
+  // scripts emit. Reading only the first leaves the credits block claiming "—".
+  try {
+    const md = ["SCRIPT.md", "script/SCRIPT.md"]
+      .map((f) => join(project, f))
+      .filter(existsSync)
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
+    return md.match(/^\*\*Voice:\*\*\s*(.+)$/m)?.[1].trim()
+        ?? md.match(/^voice:\s*(.+)$/m)?.[1].trim()
+        ?? "—";
+  } catch { return "—"; }
 }
 function fontsOf() {
+  // `assets/fonts` (HyperFrames) and `public/fonts` (Remotion) are the same idea
+  const dirs = [join(project, "assets", "fonts"), join(project, "public", "fonts")].filter(existsSync);
+  if (!dirs.length) return [];
   try {
-    return [...new Set(readdirSync(join(project, "assets", "fonts")).filter((f) => /\.(woff2?|ttf|otf)$/.test(f))
+    return [...new Set(dirs.flatMap((d) => readdirSync(d)).filter((f) => /\.(woff2?|ttf|otf)$/.test(f))
       .map((f) => f.replace(/\.(woff2?|ttf|otf)$/, "").replace(/[-_](400|600|700|italic)$/, "")))];
   } catch { return []; }
 }
@@ -198,7 +249,7 @@ function repoUrlOf() {
 const lang = /-(zh|en)$/.test(basename(project)) ? basename(project).slice(-2) : "zh";
 
 // --- build ------------------------------------------------------------------
-const frames = parseIndex();
+const frames = parseScenes();
 const titles = parseTitles();
 const { path: render, all: renderList } = pickRender();
 const { dur, size } = probeDuration(render);
@@ -218,11 +269,26 @@ const frameTotal = frames.reduce((a, f) => a + f.slot, 0);
 const name = basename(project);
 
 const outPath = resolve(opts.out ?? join(project, "PUBLISHING.md"));
-if (existsSync(outPath) && !opts.force) {
+
+// The prose blocks are the ONE thing here a person writes, and the reason to re-run this
+// script at all is to recompute everything else after a re-render. So the filled text is
+// carried across: each `<!-- FILL: … -->` … `<!-- /FILL -->` pair is looked up by its opening
+// comment and re-emitted verbatim. Without this, every regeneration silently deletes the
+// description, the lede and the titles — which is the whole reason the file exists.
+const prose = new Map();
+if (existsSync(outPath)) {
   const existing = readFileSync(outPath, "utf8");
   if (!existing.includes(GENERATED_MARKER))
     fail(`${outPath} exists and was not generated by this script — use --out <file> or --force`);
+  for (const m of existing.matchAll(/<!-- FILL:([\s\S]*?)-->\n([\s\S]*?)<!-- \/FILL -->/g)) {
+    const key = m[1].trim();
+    if (!prose.has(key)) prose.set(key, m[2].replace(/^\n+/, "").replace(/\n+$/, ""));
+  }
 }
+const fill = (key) => {
+  const body = prose.get(key);
+  return `<!-- FILL:${key} -->\n${body ? body : `<!-- ${key} -->`}\n<!-- /FILL -->`;
+};
 
 const chapterBlock = chapters.map((c) => `${fmtTime(c.at)} ${c.titles.join(" / ")}`).join("\n");
 const staleWarning = renderList.length > 1
@@ -248,11 +314,13 @@ ${GENERATED_MARKER}
 | Captions | burned in (\`compositions/captions.html\`) |
 | Index total | ${frameTotal.toFixed(2)}s across ${frames.length} frames |
 ${Math.abs(frameTotal - dur) > 1 ? `\n> ⚠ index total (${frameTotal.toFixed(1)}s) and render duration (${dur.toFixed(1)}s) differ by >1s — confirm the render matches this index.\n` : ""}
-## Title / lede  <!-- FILL: 2–4 sentences in the video's language -->
+## Title / lede
 
-<!-- FILL: opening lede — the viewer's pain point + what the film settles -->
+${fill("2–4 sentences in the video's language")}
 
-<!-- FILL: 1–2 title options -->
+${fill("opening lede — the viewer's pain point + what the film settles")}
+
+${fill("1–2 title options")}
 
 ## Chapter timeline
 
@@ -264,7 +332,7 @@ ${chapterBlock}
 - 描述：
 
 \`\`\`
-<!-- FILL: 2–4 sentence description in the video's language -->
+${fill("2–4 sentence description in the video's language")}
 
 ⏱ 章节
 ${chapterBlock}
@@ -292,7 +360,7 @@ ${chapterBlock}
 - 描述：
 
 \`\`\`
-<!-- FILL: same lede as above (translate if the video language differs) -->
+${fill("same lede as above (translate if the video language differs)")}
 
 ⏱ Chapters
 ${chapterBlock}

@@ -23,6 +23,37 @@ Each primitive lists: what it means, and its canonical composition (the default 
 | `fence` | Permission / sandbox boundary | Dashed fence around the `container`; objects outside are visibly unreachable |
 | `workflow` | A pre-written fixed flow | Chain of small labelled boxes in two snake rows with arrows between, plus a wrap arrow carrying row 1's end back to row 2's start; label "Workflow · 提前写死". Contrasts with `loop`: workflow decides up front, loop decides per step |
 | `checklist` | An exam / quality acceptance (Eval) | Clipboard glyph (clipped rectangle + ruled lines) reached by a **dotted** flow from the system it tests; label "Eval · 给 AI 做考试". The system is the candidate, the clipboard is the test |
+| `machine` | The thing that does one job at a time — a GPU, a server, a queue, a scheduler | Rounded card + its name on the top edge + ONE mono line stating its single-lane rule ("一次只能干一件事"). Its interior holds `chip`s, never free-floating labels | violet (the system itself) |
+| `chip` | One resource inside a machine — compute, bandwidth, memory, a queue | A small labelled plate inside the machine, one per resource, never two of the same kind. Two lines of type: identity on line 1, its character ("计算密集 · 喂饱算力") on line 2 | the family's own colour, one per chip |
+| `lane` | The passage of time through a machine | A horizontal ink rule with an arrowhead at the right end and a mono label at its left ("GPU 时间轴"). Blocks *ride* it — a block's height is the lane, not the machine | ink (structure) |
+| `chunk` | A slice of one long input | A stack of equal plates, each labelled `C1..Cn`, with one mono line giving the size ("4096 token / 块"). On a `lane`, a chunk is a wide plate and the gaps between chunks are the other work | blue (knowledge) |
+| `stream` | Data in motion between two places | A thick arrow whose thickness is the payload, with its label on the shaft | grey (annotation) → green when it carries output |
+| `loop` | One thing that repeats until it is done | Boxes left→right + a **self-loop arrow** curving from the last box back under them to the first (never a closed ring — the ring reads as "this runs forever", the returning arrow reads "this runs again"). The one-shot boxes before the loop stay *outside* it | blue (knowledge); the step that emits output turns green |
+
+## Zone discipline (added on the scheduling-series run)
+
+A world with two *kinds* of thing in it — people on one side, machinery on the other —
+needs layout rules the office-worker casts never had to state, because there was only ever
+one kind of thing.
+
+1. **Zones, and no migration.** Input (left) · the machine (centre) · output (right) · the
+   time lane (a bottom band spanning input + machine). Every object belongs to exactly one
+   zone and never moves out of it; growth adds *inside* the owning zone. A world that
+   reflows on reveal has restarted, not grown.
+2. **`connect` is dropped, not bent, when it would cross a foreign zone.** An arrow from the
+   prompt to the users has to cross the machine; an arrow from the chunks to the machine has
+   to cross the cache card that only appears later. Both read as false flows. Drop them, let
+   the lane and the arrival order carry the flow, and **record each drop with its reason** —
+   a dropped arrow is a decision, not an omission.
+3. **A wall straddles the edge it blocks**, and a flip is not a recolour. The flip beat paints
+   a second plate over the wall, then **re-draws the old label in red with a strike through
+   it** and puts the verdict on a second line. A green plate whose own new text is struck
+   reads as "the wall is still there and now broken" — the strike has to land on the text it
+   cancels.
+4. **Type is budgeted, not guessed.** In the toolchain below, a `size: s` label measures
+   ≈18.5 px per CJK glyph and ≈10.8 px per ASCII character, and it wraps when its estimated
+   width exceeds its declared width. Budget a card's label from those numbers; a card whose
+   text wraps grows and stops reading as the object it was.
 
 ## Fixed diagram syntaxes
 
@@ -110,6 +141,28 @@ Fan-out under a lead. Dashed return flow from the leaves back to the lead = the 
 ```
 
 The gate sits *on* the flow, not beside it: the point is that execution pauses there.
+
+## The diagram layer and the frame layer
+
+Two palettes meet here, and the seam has to be declared or a reviewer reads the artwork as a
+brand violation:
+
+- The **frame** owns cream / ink / one coral, a display serif, and a type floor (≥1.4 cqw).
+- The **diagram** owns the seven-family concept palette and is exempt from the frame's
+  one-accent rule. Its labels are identity only.
+- **Evidence numbers are not diagram labels.** A measured TTFT or tok/s is a `number-lockup`
+  in the frame chrome, never a line inside a card. A card that counts stops naming, and a
+  diagram that counts stops being a picture.
+- **A world is authored at the film's canvas size.** A 1280×720 world placed on a 1920×1080
+  frame lands at ~1.0× of its authored type size, so an 18 px diagram label sits *below* the
+  frame's 27 px floor — legible on a desktop, unreadable on a phone. Either author the world
+  at 1920×1080 (same beat count, same rules, 1.5× the coordinates) or give the art its own
+  full-bleed band and keep the frame's chrome out of it. Measured on the scheduling series:
+  1280×720 at scale 1.05 → 19 px labels, under the floor.
+- **The art gets its own band.** Head band (rail + kicker + title) above, art below it,
+  caption band below that. A full-width chrome row that crosses the art's box is a layout
+  collision by construction — at scale 1.24 the world's top edge landed *inside* the head
+  band and every evidence row sat on the diagram's own labels.
 
 ## Style rules for compositions
 

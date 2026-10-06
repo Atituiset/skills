@@ -38,12 +38,46 @@ Corollary: most "I changed one line, why is it re-rendering everything" pain is 
 | Parallel Chrome processes | `-w, --workers` | More workers inside one render. Scale against **available** memory, not core count — each worker is a Chrome holding the whole composition. Run one render at a time; see `references/render-pitfalls.md` |
 | Resume a segmented capture | `--resume`, with `HF_SEGMENTED_CAPTURE=true` | A long segmented capture survives an interruption |
 | Survive a software-GPU long run | `--browser-timeout 600 --protocol-timeout 1800000 --player-ready-timeout 900000` | A 20-minute run has already failed when one of these three was left off; take all three together |
+| Survive the shell that started the render | `setsid nohup … &` (or the project's `render-master.sh`) | A plain background render is killed when the tool call that spawned it returns, and reports `render_cancelled_parent_exited` after streaming frames — which reads exactly like a crash |
 
 ## The gate before a render
 
 A scan costs seconds; discovering its finding in the output costs a delivery render. Run `scripts/check-hygiene.py <project>` before every render, and fold it into the project's own `verify` step so nobody has to remember.
 
 It hard-fails authored `will-change`, CSS `transition`/`animation` and `@keyframes`; it warns on tweened `filter` with the tween's own duration, because the judder boundary is the **hold**, not the tween. Its findings are calibrated — inert hits filtered, argument bodies parsed — so a count above the project's baseline is a finding; see `references/render-pitfalls.md` (tooling group).
+
+**The filters are load-bearing, and a second project re-verified them.** A tldraw artwork set
+brought **657 literal `will-change: auto`** and 296 exported computed-style dumps into the
+project. A naive scan reports all 657 as contamination; `check-hygiene.py` reported the
+project clean, because it filters on the value (`auto` is the *initial* value, so nothing is
+authored) and scans `<style>` blocks rather than inline `style=""`. If a future run ever sees
+a non-zero count from artwork alone, the filter has regressed — do not raise the baseline to
+match it.
+
+## Render economics: measured on a second, shorter film
+
+A 19-frame / 240-second bilingual film, same box as the reference run (18 cores / 15 GB,
+software GPU):
+
+| step | measured |
+|---|---|
+| `check` — lint + runtime + layout + motion + contrast over the whole master | **~2 min** |
+| `snapshot --at …` — 6 frames plus a contact sheet | **~90 s** |
+| master render — 7 217 frames, 5 workers | **~4 min** |
+| the same project *before* its assets were stripped | **died at `t=0s`** |
+
+Two lessons that belong next to the flags:
+
+- **The renderer's failure mode is assembly weight, not frame count.** Inlining 19 frames of
+  tldraw markup (~330 KB each, ~180k inline style declarations) killed the tab on the master
+  while every single frame was fine and `lint` was clean. The assets had to get smaller
+  *before* assembly — `check_runtime_failure: Protocol error (Runtime.callFunctionOn): Target
+  closed`, 12 GB free, nothing to point at. See
+  [`../tldraw-video-assets/references/integration-findings.md`](../tldraw-video-assets/references/integration-findings.md) §8.
+- **A render dies with its parent.** Launch it with `setsid nohup` — the project's
+  `scripts/render-master.sh` here does exactly that — or it reports
+  `render_cancelled_parent_exited` after streaming frames for a while, which is
+  indistinguishable from a crash and costs the whole delivery run.
 
 ## Workflow
 
@@ -112,3 +146,27 @@ A 9:16 deliverable is a re-composition, not a crop, and this project never got o
 | `references/condensed-versions.md` | You are making an 8–10 or 3–5 minute version — why cutting segments loses points, purpose-written narration, the piecewise cue warp, the trim ledger |
 | `references/bilingual-dual-project.md` | zh and en timelines, TTS word boundaries as the reveal clock, cross-language re-timing |
 | `references/vertical-shortform.md` | You are planning 9:16 and have to choose between a crop and a re-layout — pick the **layout** first, then read the attempts and what each cost. The branch was abandoned; the record is kept |
+## Close-out gate (added on the chunked-prefill run)
+
+Before a longform master is called done, all four must hold — and the last one is the one
+that gets skipped:
+
+1. `theme-check.py` PASS and `verify_stack.py` reports `0 differing pixels` (the deltas
+   compose to the final frame).
+2. `hyperframes check` → `Check passed`, with **0 layout errors**, and the contrast count is
+   `N/N`, not `0/0`. A `0/0` contrast line means the browser session never ran: the layout,
+   motion and contrast sections are placeholders, not a pass.
+3. Rasterise one mid-film frame and **count `[data-tl]` nodes with a non-zero bounding box**,
+   and compare against the expected shape count. This is the only check that catches artwork
+   silently missing from the composition, which a malformed HTML attribute will do while
+   still reporting a clean layout audit.
+4. **The voice matches the script.** `build-project.py` reads `SCRIPT.md` for the captions
+   and `audio_meta.json` for the audio; they are independent inputs. Rewriting every line of
+   narration and rebuilding produces a film that says one thing on screen and another in the
+   voice, at the same total duration, and nothing in a spot-check reveals it. Re-run
+   `gen-voice.py --project .` after **any** narration edit, then rebuild.
+
+Corollary for pacing: the longest single line is the frame most likely to read as static,
+because it is the frame with the fewest new shapes. Give that beat its own choreography, or
+split the line. A 30 s frame carrying one text label will feel broken no matter how good the
+camera is.

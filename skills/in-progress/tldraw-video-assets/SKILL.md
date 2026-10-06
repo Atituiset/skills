@@ -5,7 +5,7 @@ description: Wiring tldraw-exported SVG artwork into a deterministic video pipel
 
 # tldraw video assets (export → deterministic pipeline)
 
-**Status: incubating** — see [skills/in-progress/](../README.md). Every number below was measured on the worked asset set in [`../visual-storytelling/examples/agent-article-beats/`](../visual-storytelling/examples/agent-article-beats/) (18 beat deltas + `final-frame.svg`) and on the composition code that consumes it.
+**Status: incubating** — see [skills/in-progress/](../README.md). Two asset sets have now been through it. §1–§6 were measured on the worked set in [`../visual-storytelling/examples/agent-article-beats/`](../visual-storytelling/examples/agent-article-beats/) (18 beat deltas + `final-frame.svg`); **§7–§12 were measured on a second, harder set** — a GPU-scheduling world rendered with tldraw 3.15.6, built into a bilingual 19-frame film, shipped to `check` with 0 errors and 186/186 WCAG AA — and they change two claims above (see the table at the top of the reference).
 
 ## The boundary
 
@@ -25,6 +25,8 @@ tldraw's exporter emits a **document**, not a picture: HTML labels, an inlined c
 3. **Scan properties, not text.**
 4. **Verify by pixels.**
 5. **Re-viewBox, never re-draw.**
+6. **Re-theme, don't re-draw** — and assert the theme covers every colour (below).
+7. **Make it small enough to assemble** — the dump will otherwise kill the renderer.
 
 ## 1. The export is a document, not an image
 
@@ -135,6 +137,7 @@ Working method, the per-beat lift arithmetic, and real dropped-artwork entries w
 | Read | When |
 |---|---|
 | `references/export-anatomy.md` | You have the file open and need to know what a part *is*: the root `<g>` shape wrapper, the fill/stroke pair per shape, the arrow's shaft-plus-separate-head, the `opacity="0"` clip rect, the `clipPath` id scheme, the two nested style dumps, the label box padding tiers, `fonts.css`. |
+| `references/integration-findings.md` | Second asset set, harder subject: the palette has to be re-themed for a non-white ground (four of seven colours are under 4.5:1 as exported), the computed-style dump crashes the renderer at assembly, the arrow-label halo is invisible *and* unreadable, the layout audit cannot see a delta stack, and the placement arithmetic for putting a 1280×720 world on a 1920×1080 frame — with the four tooling scripts that came out of it. |
 | `references/measurement-and-verification.md` | You are about to trust a number about this artwork: the path-data walk, the transform stack, the over-estimate bias, the `foreignObject` ink estimate, dropping invisible rects, the per-beat measurement table for the worked set, pixel equivalence, the dark-pixel bbox, the blank-frame check. |
 | `references/replacing-on-a-new-canvas.md` | The canvas changes shape or size: the beat stack, per-beat `viewBox`, the type-lift arithmetic against a floor, choosing which beats a moment needs, recording what was dropped. |
 | [`../visual-storytelling/SKILL.md`](../visual-storytelling/SKILL.md) | You need to know *what* to draw and in what order — before any of this applies. |
@@ -157,3 +160,6 @@ Run before a composition consumes the assets, and again after any re-placement. 
 - [ ] The dark-pixel bbox of the rendered frame sits inside the canvas with its intended margin, and the edge columns carry no ink.
 - [ ] Re-placed bands: each has its own `viewBox` from its own ink, `overflow: hidden`, namespaced ids, and a label at or above the type floor.
 - [ ] Every beat a moment did **not** use is recorded with its reason.
+- [ ] Every colour in the export is covered by the theme, and every text colour clears 4.5:1 on the ground **and** on the tile step (`theme-check.py` exits 0).
+- [ ] The style dump is stripped, and the strip is **proved**: the stack rasterises identically before and after (`stile-labels.py` + a pixel diff, 0 differing pixels).
+- [ ] Labels a later beat repaints carry the layout-suppression marker **on the text leaf**, with a value — an audit that reports 80 correct-by-design overlaps is a delta stack the auditor cannot read, and the alternative (mark the art svg) hides the real ones.

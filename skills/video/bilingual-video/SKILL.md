@@ -9,6 +9,28 @@ This is the **shared foundation** for all bilingual video production, independen
 
 For technical explainer videos, use this repo's `bilingual-tech-explainer` directly (it depends on this skill).
 
+## 0. Ask for the colour direction before building anything
+
+The first question of a video project is not "what's the script" — it is **what colour is it**.
+A film's ground (warm paper vs dark technical) is a taste call the author owns, it is expensive to
+change late (a re-theme is cheap; a re-render is minutes; a re-authoring of 18 beats is a day), and
+no default is right more than half the time. Ask once, up front, and record the answer:
+
+1. **Ground** — light or dark?
+2. **Register** — machinery / infra / systems usually wants a cool technical dark; people,
+   process, and office-worker casts usually want a warm paper light. This one is a strong prior,
+   not a rule — ask anyway.
+3. **How loud is the accent** — one saturated family against neutrals, or several at equal weight?
+
+Then thread the answer through, in this order, so it is set once and never re-litigated:
+`frame.md` (design spec) → the theme sheet's named `--t-ground` / `--t-plate` → the contrast gate,
+which must be **run against the chosen ground**, not against whatever the art tool defaulted to.
+A palette re-asked at delivery is worse than a palette assumed at the start.
+
+Per-family meanings (blue = knowledge, green = output, orange = methods, violet = the system,
+yellow = human, red = walls, grey = annotation) stay fixed regardless of ground — a dark theme
+re-picks values, it does not reassign meaning.
+
 ## 1. Dual projects, never parameterized
 
 Build two independent projects, `videos/<name>-zh` and `videos/<name>-en`. Narration length can differ by up to 15% between languages; independent timelines are the only way to avoid contortions. Order: **build zh end-to-end to render first; then the EN project copies zh's `compositions/frames/`, translates frame by frame, and re-times to English word boundaries** — reveals must re-anchor to the word actually being spoken; uniform rescaling is forbidden. Mirrored edits are done twice and verified twice. Before the EN render, pass the derivation gate (pitfalls 35–37): re-assemble the index, CJK-scan every frame, re-run `check` for width-expansion overlaps.
@@ -50,6 +72,6 @@ Then fill only the prose: the `<!-- FILL -->` blocks (lede + title options, 2–
 
 **A human must listen to the narration before publishing** (especially mixed zh/en words) — the model cannot hear itself (pitfall 26). The pack's checklist is the gate, not a formality.
 
-## 5. Pitfalls checklist (42 rules, all universal)
+## 5. Pitfalls checklist (45 rules, all universal)
 
 `<SKILL_DIR>/references/pitfalls.md`: five categories — narration/captions, composition/timeline, animation/seek-safety, text/contrast, workflow/collaboration. Read it before dispatching tasks to any agent (or doing it yourself).
