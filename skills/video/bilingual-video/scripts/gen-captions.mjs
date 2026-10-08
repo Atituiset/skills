@@ -86,7 +86,11 @@ function pagesFor(text, words) {
   const flush = () => { if (cur && cur.to.length) pages.push(cur); cur = null; };
   let idx = 0;                           // narration index, parallel to posOf minus skips
   for (const ch of text) {
-    if (/\s/.test(ch)) continue;
+    // A space is CONTENT, not a separator to skip. Skipping it is invisible in zh — but in any
+    // space-delimited script it concatenates every word on the page: the English captions
+    // shipped as "Hasthiseverhappenedtoyou?" and both gates stayed green, because the
+    // alignment gate also strips whitespace. The bug and the gate shared one blind spot.
+    if (/\s/.test(ch)) { if (cur) cur.text += ch; continue; }
     if (PUNCT.has(ch)) { if (cur) cur.text += ch; flush(); continue; }
     const at = posOf[idx];
     idx += 1;
@@ -154,6 +158,34 @@ for (const [n, pages] of Object.entries(byFrame)) {
 if (mismatched) {
   console.error(`\n${mismatched} page(s) whose text and words disagree — narration walk is desynced.`);
   process.exit(1);
+}
+// A second gate, for space-delimited scripts: the page's text with punctuation removed and
+// whitespace COLLAPSED must equal its own words joined with a space. Stripping whitespace — as
+// the alignment gate correctly does — cannot see a missing space; this one can, and it is the
+// check that would have caught the English captions before they rendered.
+const fm = readFileSync(resolve(ROOT, 'script/SCRIPT.md'), 'utf8');
+const lang = /^language:\s*(\S+)/m.exec(fm)?.[1] ?? 'zh';
+const SPACELESS = /^zh|^ja|^ko/;
+const collapse = (t) => t.replace(/[\p{P}\p{S}]/gu, '').replace(/\s+/g, ' ').trim();
+let spaced = 0;
+if (!SPACELESS.test(lang)) {
+  for (const [n, pages] of Object.entries(byFrame)) {
+    for (const [i, pg] of pages.entries()) {
+      const want = collapse(pg.text);
+      const got = collapse(pg.words.map((w) => w.text).join(' '));
+      if (want !== got) {
+        spaced += 1;
+        if (spaced <= 5) console.log(`  \u2717 F${n} p${i}: ${want.slice(0, 40)} != ${got.slice(0, 40)}`);
+      }
+    }
+  }
+  if (spaced) {
+    console.error(`\n${spaced} page(s) lost their word boundaries — the text would render concatenated.`);
+    process.exit(1);
+  }
+  console.log('gate: word boundaries preserved (space-delimited script) \u2014 pages read as sentences');
+} else {
+  console.log('gate: CJK script \u2014 space check skipped by language');
 }
 console.log('gate: every page\'s text equals its own words \u2014 narration walk matches the recording');
 
