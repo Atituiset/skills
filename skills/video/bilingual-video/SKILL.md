@@ -37,7 +37,7 @@ Build two independent projects, `videos/<name>-zh` and `videos/<name>-en`. Narra
 
 ## 2. Narration & captions (type-independent)
 
-- **Chinese**: edge-tts `zh-CN-XiaoxiaoNeural --rate=+3%` (Kokoro's Chinese voices have an accent; its English voices are excellent). Use `scripts/gen-voice.py` — edge-tts's `boundary="WordBoundary"` native word boundaries directly produce an `audio_meta.json` compatible with the official pipeline, no Whisper needed:
+- **Chinese**: edge-tts `zh-CN-XiaoxiaoNeural --rate=+3%` (Kokoro's Chinese voices have an accent; its English voices are excellent). Use `scripts/gen-voice.py` — the voice and rate come from the script's own front matter, not from a hard-coded constant — edge-tts's `boundary="WordBoundary"` native word boundaries directly produce an `audio_meta.json` compatible with the official pipeline, no Whisper needed:
   ```bash
   python3 -m venv scripts/.venv && scripts/.venv/bin/pip install edge-tts fonttools brotli
   scripts/.venv/bin/python <SKILL_DIR>/scripts/gen-voice.py --project .          # all lines
@@ -46,6 +46,12 @@ Build two independent projects, `videos/<name>-zh` and `videos/<name>-en`. Narra
 - **English**: the official audio pipeline + Kokoro `af_sky` `--speed 1.05` (requires `pip install kokoro-onnx soundfile`, with `HYPERFRAMES_PYTHON` pointing at the venv).
 - Both engines are deterministic. On both sides, use the official `audio.mjs sync-durations` to write durations back into the storyboard, and `captions.mjs` for captions.
 - **Caption style (defaults for every video)**: plain text overlaid on the frame — no background pill/box (if legibility needs help, a subtle text shadow, never a panel). Groups are full phrases / breath groups (one sentence segment per line), never 2–4-word fragments. No underline on the currently-spoken word — highlight by accent color or weight if at all. Set these in the caption skin / `caption-overrides.json` before running `captions.mjs`.
+
+**Captions are generated from the same word boundaries** (`scripts/gen-captions.mjs`): cut only at
+punctuation — CJK and ASCII *and em-dashes*, which are breath points in English — then gate the
+alignment. The gate asserts each page's punctuation-stripped text equals its own words, and that
+every page lands on a real word boundary in order; one variable indexing both a string's
+characters and a word array produced 242/242 silently-wrong pages with well-formed timestamps.
 
 ## 3. The iteration loop (cheapest path for script edits)
 

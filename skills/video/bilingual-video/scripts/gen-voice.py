@@ -18,8 +18,20 @@ if "--project" in _argv:
 sys.argv = [sys.argv[0]] + _argv
 SCRIPT = ROOT / "SCRIPT.md"
 OUT = ROOT / "audio"
+# The voice and rate come from the script's OWN front matter, not from here:
+#   voice: edge-tts zh-CN-XiaoxiaoNeural rate +3%
+# A hard-coded voice is how an English project ends up narrated in Chinese, or an English
+# line read at a Chinese-tuned rate. The front matter is the one place a project states
+# what it is.
 VOICE = "zh-CN-XiaoxiaoNeural"
 RATE = "+3%"
+try:
+    _fm = re.search(r"^voice:\s*edge-tts\s+(\S+)\s+rate\s*(\S+)\s*$",
+                    (ROOT / "SCRIPT.md").read_text(encoding="utf-8"), re.M)
+    if _fm:
+        VOICE, RATE = _fm.group(1), _fm.group(2)
+except FileNotFoundError:
+    pass
 
 def parse_script(md: str):
     lines, cur = [], None
